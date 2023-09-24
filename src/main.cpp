@@ -13,7 +13,9 @@ using std::string ;
 
 std::wstring tetromino[7] ;
 int nFieldWidth = 12 ;
-int nFildHeight =18 ;
+int nFieldHeight =18 ;
+// the board where we play the game
+unsigned char * pField{nullptr} ;
 
 // base on the rotation of tetromino returns the index of particular position {of pixel}
 int Rotate(int px, int py, int r, int w=4){
@@ -88,6 +90,18 @@ int main()
     tetromino[6].append(L"...."); 
 
     
+    pField = new unsigned char[nFieldWidth*nFieldHeight]; // create the board 
+    for(int x{0}; x < nFieldWidth; x++){ // the boundary on width
+        for(int y{0}; y <nFieldHeight;y++){ // the boundary on height
+            // remenber cuda ?
+            int index = y*nFieldWidth + x ;
+            //filling the board 
+            // 9 in the boundaries  : when x touches width boundaries(0 and nFieldWidth-1) or y touches height -1 
+            // 0 in the rest : playable zone 
+            pField[y*nFieldWidth + x] = (x==0 || x==nFieldWidth -1|| y == nFieldHeight-1) ? 9 : 0;
+        }
+
+    }
     //prints to the ncurses window                                               
     printw("");
     //to read a character from the keyboard in a terminal-based user interface (TUI)                                                                           
