@@ -145,11 +145,12 @@ int main()
 
     bool bGameState{false};
 
-    int nCurrentPiece{0} ;
+    int nCurrentPiece{5} ;
     int nCurrenRotation{0} ;
     int nCurrentX{nFieldWidth /2} ;
     int nCurrentY{0}; 
     int pKey{0};
+    bool bRotateHold{false} ;
     while (!bGameState)
     {   
 
@@ -170,11 +171,11 @@ int main()
 
             switch (ch)
             {
-            case 82: // FOR R
-                pKey = 1;
-                break ;
-            case 114: // FOR r
-                pKey = 1;
+            case 114 :
+                pKey = 1 ;
+                break;
+            case 82 :
+                pKey = 1 ;
                 break ;
             case KEY_DOWN :
                 pKey =2;
@@ -185,6 +186,7 @@ int main()
             case KEY_LEFT :
                 pKey=4;
                 break ;
+
             }    
 
         }
@@ -219,8 +221,8 @@ int main()
             }
 
         }
-        
-
+        bRotateHold = (pKey==1) ? true : false ;
+        nCurrenRotation += (pKey==1 && bRotateHold && DoesPieceFit(nCurrentPiece, nCurrenRotation + 1, nCurrentX, nCurrentY)) ? 1 : 0 ;
         
 
         // Draw Field
