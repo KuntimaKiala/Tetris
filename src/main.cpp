@@ -163,15 +163,16 @@ int main()
     int nCurrentY{0}; 
     int pKey{0};
     bool bRotateHold{false} ; 
-    int nSpeed{20} ; //game dificulty 
+    int nSpeed{30} ; //game dificulty 
     int nSpeedCounter{0}; // game tick 
     bool bForceDown{0} ;
-
+    int score{0};
+    int nPieceCount{0};
     vector<int> vLines ;
 
     while (!bGameState)
     {   
-
+        mvwprintw(gameWin, 7, 15, "SCORE: %d", score);
         pKey = 0 ;
 
 
@@ -265,7 +266,10 @@ int main()
                     }
                 
                 }
-
+                nPieceCount++ ;
+                if( nPieceCount%10 == 0){
+                    if(nSpeed >=10) nSpeed--;
+                }
                 //2-Check if we got any lines | place to play 
                 for(int py{0}; py < N_COLOMNS; py++){
                     if (nCurrentY + py < nFieldHeight - 1){
@@ -284,7 +288,11 @@ int main()
                         }
                     }                
                 } 
-
+                
+                if(!vLines.empty()) {
+                    score += (1 << vLines.size()*100); 
+                // 0000001: 0000001 << 2 --> 0000100 -->
+                }
                 // choose next piece randomly and set all is attributtes to default positions
                 nCurrentPiece = randPiece(mt) ;
                 nCurrentX = nFieldWidth / 2 ;
@@ -312,7 +320,7 @@ int main()
         
         // here where we remove lines when the last row does not have empty spaces
         if(!vLines.empty()){
-            
+            score +=25 ;
             //mvwaddch(gameWin, nScreenHeight , nScreenWidth , '=' ); 
             std::this_thread::sleep_for(400ms);
 
@@ -351,7 +359,7 @@ int main()
 
     //clean up and restore the terminal to its normal mode.                      
     endwin() ;
-
+    cout << "GAME OVER" << endl ;
   
     return 0;
 }
