@@ -149,10 +149,11 @@ int main()
     int nCurrenRotation{0} ;
     int nCurrentX{nFieldWidth /2} ;
     int nCurrentY{0}; 
-
+    int pKey{0};
     while (!bGameState)
     {   
 
+        pKey = 0 ;
         // GAME FPS 
         std::this_thread::sleep_for(50ms);
         // USER INPUT 
@@ -169,20 +170,58 @@ int main()
 
             switch (ch)
             {
-            case KEY_UP:
+            case 82: // FOR R
+                pKey = 1;
+                break ;
+            case 114: // FOR r
+                pKey = 1;
                 break ;
             case KEY_DOWN :
-                break ;
+                pKey =2;
+                break;
             case KEY_RIGHT :
+                pKey=3;
                 break ;
             case KEY_LEFT :
+                pKey=4;
                 break ;
             }    
 
         }
 
         // GAME LOGIC 
+        
+       
+        //LEFT KEY
+        if (pKey==4){ 
+            // check first if the piece fit 
+            if(DoesPieceFit(nCurrentPiece, nCurrenRotation, nCurrentX-1, nCurrentY)){
+                // if the piece fits update the X position
+                nCurrentX -= 1  ;
+            }
+        }
+        //RIGHT KEY
+        if (pKey ==3){
+            // check first if the piece fit 
+            if(DoesPieceFit(nCurrentPiece, nCurrenRotation, nCurrentX+1, nCurrentY)){
+                // if the piece fits update the X position
+                nCurrentX += 1 ;
+            }
 
+
+        }//DOWN KEY
+        if (pKey == 2)
+        {
+           // check first if the piece fit 
+            if(DoesPieceFit(nCurrentPiece, nCurrenRotation, nCurrentX, nCurrentY+1)){
+                // if the piece fits update the X position
+                nCurrentY += 1 ;
+            }
+
+        }
+        
+
+        
 
         // Draw Field
         for(int x{0}; x < nFieldWidth; x++){ // the boundary on width
@@ -204,6 +243,7 @@ int main()
             }
         }
         //refresh
+       
         wrefresh(gameWin);
 
        
