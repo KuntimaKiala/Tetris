@@ -2,11 +2,14 @@
 #include <thread>
 #include <ncurses.h>
 #include <chrono>
+#include <random>
+#include <vector>
 #define N_COLOMNS 4
 
 using std::cout ;
 using std::endl ;
 using std::string ;
+using std::vector ;
 using namespace std::chrono_literals ;
 
 
@@ -145,18 +148,38 @@ int main()
 
     bool bGameState{false};
 
-    int nCurrentPiece{5} ;
+    
+
+
+    std::random_device rd ;
+    std::seed_seq ss{rd(), rd(), rd(), rd()} ;
+    std::mt19937 mt{ss} ;
+
+    std::uniform_int_distribution<int> randPiece(0, 6);
+
+    int nCurrentPiece{randPiece(mt)} ; // picking the current piece randomly
     int nCurrenRotation{0} ;
     int nCurrentX{nFieldWidth /2} ;
     int nCurrentY{0}; 
     int pKey{0};
-    bool bRotateHold{false} ;
+    bool bRotateHold{false} ; 
+    int nSpeed{20} ; //game dificulty 
+    int nSpeedCounter{0}; // game tick 
+    bool bForceDown{0} ;
+
+    vector<int> vLines ;
+
     while (!bGameState)
     {   
 
         pKey = 0 ;
+
+
+
         // GAME FPS 
-        std::this_thread::sleep_for(50ms);
+        nSpeedCounter++;
+        bForceDown = (nSpeedCounter == nSpeed) ;
+        std::this_thread::sleep_for(100ms);
         // USER INPUT 
         //prints to the ncurses window                                               
         printw("");
@@ -224,22 +247,95 @@ int main()
         bRotateHold = (pKey==1) ? true : false ;
         nCurrenRotation += (pKey==1 && bRotateHold && DoesPieceFit(nCurrentPiece, nCurrenRotation + 1, nCurrentX, nCurrentY)) ? 1 : 0 ;
         
+        if(bForceDown){
+            //check first if the piece fit 
+            if(DoesPieceFit(nCurrentPiece, nCurrenRotation, nCurrentX, nCurrentY +1)){
+                nCurrentY++; // keep sending it down
+            }
+            else{
+                //in case the piece did not fit 
+
+                // 1-Lock the current piece in the field, it becames part of the board  
+                for(int px{0}; px < N_COLOMNS; px++){ // the boundary on width
+                    for(int py{0}; py <N_COLOMNS;py++){ // the boundary on height
+                    // check if the element in the piece is X
+                        if (tetromino[nCurrentPiece][Rotate(px, py, nCurrenRotation)] == L'X'){
+                            pField[(nCurrentY +py)*nFieldWidth +(nCurrentX + px)] = nCurrentPiece + 1 ;
+                        }
+                    }
+                
+                }
+
+                //2-Check if we got any lines | place to play 
+                for(int py{0}; py < N_COLOMNS; py++){
+                    if (nCurrentY + py < nFieldHeight - 1){
+                        bool bLine = true ;
+                        for (int px{1}; px < nFieldWidth -1; px++){
+                            // check the entire line if there is still empty space | remember 0 maps to a space : L" ABCDEFG=#"[pField[y*nFieldWidth + x]]
+                            bLine &=(pField[(nCurrentY +py)*nFieldWidth +px]) != 0;
+                        }
+                        if(bLine){
+                            //If the Line is not empty rwe have to remove, first set  it to (=) |   remember 8 maps to a = : L" ABCDEFG=#"[pField[y*nFieldWidth + x]]
+                             for (int px{1}; px < nFieldWidth-1; px++){
+                                pField[(nCurrentY +py)*nFieldWidth +   px] = 8 ;
+                             }
+                             vLines.push_back(nCurrentY + py); // the number of the raw
+
+                        }
+                    }                
+                } 
+
+                // choose next piece randomly and set all is attributtes to default positions
+                nCurrentPiece = randPiece(mt) ;
+                nCurrentX = nFieldWidth / 2 ;
+                nCurrentY = 0 ;
+                nCurrenRotation = 0 ;
+              
+
+                // 4-if piece does not fit then game over 
+                bGameState = !DoesPieceFit(nCurrentPiece, nCurrenRotation, nCurrentX, nCurrentY);
+            }
+            nSpeedCounter = 0 ;
+        }
 
         // Draw Field
         for(int x{0}; x < nFieldWidth; x++){ // the boundary on width
-            for(int y{0}; y <nFieldHeight;y++){ // the boundary on height
+            for(int y{0}; y <nFieldHeight;y++){ // the boundary on height 
+            //L" ABCDEFG=#"[pField[y*nFieldWidth + x]] is mapping based on index, you get a letter 
+            // if pField[y*nFieldWidth + x] = 0 | [0 as unsigned char ] 
+            // then will have L" ABCDEFG=#"[0] zero here correspond to A
+            // if pField[y*nFieldWidth + x] = 6 | [6 as unsigned char ] 
+            // then will have L" ABCDEFG=#"[0] zero here correspond to G
              mvwaddch(gameWin, (y+7), (x+1), L" ABCDEFG=#"[pField[y*nFieldWidth + x]]);
             }
         }
         
-        // Draw Current Piece | N_COLOMNS = 4
+        // here where we remove lines when the last row does not have empty spaces
+        if(!vLines.empty()){
+            
+            //mvwaddch(gameWin, nScreenHeight , nScreenWidth , '=' ); 
+            std::this_thread::sleep_for(400ms);
+
+            for (auto &v : vLines)
+				for (int px = 1; px < nFieldWidth - 1; px++)
+				{
+					for (int py = v; py > 0; py--)
+						pField[py * nFieldWidth + px] = pField[(py - 1) * nFieldWidth + px];
+					pField[px] = 0;
+				}
+
+			vLines.clear();
+
+        }
+        // Draw Current Piece | N_COLOMNS = 4 | we draw char values eg( the 65 will turn into 'A')
         for(int px{0}; px < N_COLOMNS; px++){ // the boundary on width
             for(int py{0}; py <N_COLOMNS;py++){ // the boundary on height
                 // check if the element in the piece is X
                 if (tetromino[nCurrentPiece][Rotate(px, py, nCurrenRotation)] == L'X'){
                      // 65 = A in ASCII 
                      //remeber this L" ABCDEFG=#"[pField[y*nFieldWidth + x]] ?
-                     mvwaddch(gameWin, (nCurrentY+py+7), (nCurrentX+px+1), nCurrentPiece + 65);
+                     mvwaddch(gameWin, (nCurrentY+py+7), (nCurrentX+px+1), nCurrentPiece + 65); 
+                     // and nCurrentPiece range from 0 to 6 : nCurrentPiece + 65 will be  A or B or C or D or E or F or G
                 }
             
             }
@@ -251,8 +347,7 @@ int main()
        
     }
 
-    // Clean up
-    endwin();
+
 
     //clean up and restore the terminal to its normal mode.                      
     endwin() ;
