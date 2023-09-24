@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/kuntima/workspace/github/Tetris/src/main.cpp
+iostream
+-
+thread
+-
+ncurses.h
+-
+chrono
+-
+random
+-
+vector
+-
+
