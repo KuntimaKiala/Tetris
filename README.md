@@ -1,5 +1,5 @@
 # Tetris
-A based Linux Tetris build with C++ using ncurses 
+A based Linux Tetris game built with C++ using ncurses 
 
 # How run 
     in src folder   :
